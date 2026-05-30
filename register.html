@@ -227,15 +227,6 @@
             margin-top: 8px; display: none;
         }
         .file-preview.show { display: block; }
-        .camera-btn {
-            width: 100%; padding: 10px;
-            background: #f5f5f5; border: 1.5px dashed #ddd;
-            border-radius: 10px; font-size: 13px;
-            color: #666; cursor: pointer; margin-top: 8px;
-            display: flex; align-items: center;
-            justify-content: center; gap: 6px;
-        }
-        .camera-btn:hover { border-color: var(--primary-yellow); }
         .network-badge {
             display: inline-block; padding: 4px 10px;
             border-radius: 50px; font-size: 11px;
@@ -392,10 +383,6 @@
                 <span class="summary-value">GH₵ 15.00</span>
             </div>
             <div class="summary-row">
-                <span class="summary-label">Wallet Balance</span>
-                <span class="summary-value" id="walletDisplay">GH₵ 0.00</span>
-            </div>
-            <div class="summary-row">
                 <span class="summary-label">Review Time</span>
                 <span class="summary-value">5-10 minutes</span>
             </div>
@@ -403,7 +390,7 @@
 
         <div class="form-card">
             <h4>Applicant Details</h4>
-            <p>Fill the form carefully. Your wallet will be charged only when submission succeeds.</p>
+            <p>Fill the form carefully. Payment required to submit.</p>
 
             <div class="form-group">
                 <label>Full Name <span class="required">*</span></label>
@@ -443,20 +430,6 @@
             <div class="form-group">
                 <label>Occupation <span class="required">*</span></label>
                 <input type="text" id="occupation" class="form-input" placeholder="e.g. Student, Teacher, Business Owner">
-            </div>
-
-            <div class="file-input-wrapper">
-                <label>Profile Photo <span class="required">*</span></label>
-                <p class="file-hint">Upload a clear photo of yourself. Accepted: JPG, PNG, WEBP. Maximum 5MB.</p>
-                <label class="file-box" id="profilePhotoBox">
-                    <input type="file" id="profilePhotoFile" accept="image/*" onchange="handleFileSelect(this, 'profilePhotoPreview', 'profilePhotoBox')">
-                    <span class="file-box-text" id="profilePhotoLabel">Choose File — No file chosen</span>
-                </label>
-                <img class="file-preview" id="profilePhotoPreview" alt="Profile Photo Preview">
-                <button type="button" class="camera-btn" onclick="openSelfie('profilePhoto')">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Take Selfie
-                </button>
             </div>
 
             <div class="file-input-wrapper">
@@ -507,13 +480,9 @@
                 <span class="label">Charge</span>
                 <span class="value">GH₵ 15.00</span>
             </div>
-            <div class="submit-row">
-                <span class="label">Current Wallet</span>
-                <span class="value" id="walletSummary">GH₵ 0.00</span>
-            </div>
         </div>
 
-        <button class="btn-submit" id="submitBtn" onclick="submitRegistration()">Submit Registration</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitRegistration()">Pay GH₵ 15.00 & Submit</button>
     </div>
 
     <!-- Selfie Modal -->
@@ -529,7 +498,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc, updateDoc, serverTimestamp, collection, addDoc, increment } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, addDoc, increment } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-functions.js";
 
@@ -550,7 +519,6 @@
         const functions = getFunctions(app);
 
         let currentUser = null;
-        let currentWallet = 0;
         let selfieTarget = null;
         let selfieBlob = null;
 
@@ -560,15 +528,6 @@
                 return;
             }
             currentUser = user;
-
-            onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    currentWallet = data.walletBalance || 0;
-                    document.getElementById('walletDisplay').textContent = 'GH₵ ' + currentWallet.toFixed(2);
-                    document.getElementById('walletSummary').textContent = 'GH₵ ' + currentWallet.toFixed(2);
-                }
-            });
         });
 
         function toggleMenu() {
@@ -644,17 +603,11 @@
                 selfieBlob = blob;
                 const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
                 
-                if (selfieTarget === 'profilePhoto') {
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    document.getElementById('profilePhotoFile').files = dt.files;
-                    handleFileSelect(document.getElementById('profilePhotoFile'), 'profilePhotoPreview', 'profilePhotoBox');
-                } else {
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    document.getElementById('selfieFile').files = dt.files;
-                    handleFileSelect(document.getElementById('selfieFile'), 'selfiePreview', 'selfieBox');
-                }
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                document.getElementById('selfieFile').files = dt.files;
+                handleFileSelect(document.getElementById('selfieFile'), 'selfiePreview', 'selfieBox');
+                
                 closeSelfie();
             }, 'image/jpeg', 0.9);
         }
@@ -681,7 +634,6 @@
             const location = document.getElementById('location').value.trim();
             const dob = document.getElementById('dob').value;
             const occupation = document.getElementById('occupation').value.trim();
-            const profilePhoto = document.getElementById('profilePhotoFile').files[0];
             const selfie = document.getElementById('selfieFile').files[0];
             const frontFile = document.getElementById('frontFile').files[0];
             const backFile = document.getElementById('backFile').files[0];
@@ -692,101 +644,76 @@
             if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
                 alert('Phone number must be exactly 10 digits.'); return;
             }
-            if (!profilePhoto || !selfie || !frontFile || !backFile) {
-                alert('Please upload all required documents (Profile Photo, Selfie, Ghana Card Front & Back).'); return;
+            if (!selfie || !frontFile || !backFile) {
+                alert('Please upload all required documents (Selfie, Ghana Card Front & Back).'); return;
             }
 
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.textContent = 'Processing...';
+            btn.disabled = true;
+            btn.textContent = 'Opening Payment...';
 
             try {
                 // Upload files first
                 const timestamp = Date.now();
-                const profileRef = ref(storage, `registrations/${currentUser.uid}/${timestamp}_profile`);
                 const selfieRef = ref(storage, `registrations/${currentUser.uid}/${timestamp}_selfie`);
                 const frontRef = ref(storage, `registrations/${currentUser.uid}/${timestamp}_front`);
                 const backRef = ref(storage, `registrations/${currentUser.uid}/${timestamp}_back`);
                 
-                await uploadBytes(profileRef, profilePhoto);
                 await uploadBytes(selfieRef, selfie);
                 await uploadBytes(frontRef, frontFile);
                 await uploadBytes(backRef, backFile);
                 
-                const profileUrl = await getDownloadURL(profileRef);
                 const selfieUrl = await getDownloadURL(selfieRef);
                 const frontUrl = await getDownloadURL(frontRef);
                 const backUrl = await getDownloadURL(backRef);
 
-                // Store file URLs for later use
-                const uploadData = {
-                    profilePhotoUrl: profileUrl,
-                    selfieUrl: selfieUrl,
-                    frontUrl: frontUrl,
-                    backUrl: backUrl
-                };
+                // Store pending data in localStorage for callback
+                const uploadData = { selfieUrl, frontUrl, backUrl };
+                const reference = 'REG_' + timestamp + '_' + Math.random().toString(36).substr(2, 9);
+                
+                localStorage.setItem('pendingRegData', JSON.stringify({
+                    name, phone, idType, idNumber, location, dob, occupation,
+                    uploads: uploadData,
+                    reference: reference
+                }));
 
-                // Check wallet balance
-                if (currentWallet >= 15) {
-                    // WALLET PAYMENT PATH
-                    const reference = 'WALLET_DEDUCT_' + timestamp;
-                    
-                    // Deduct wallet
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await updateDoc(userRef, {
-                        walletBalance: increment(-15),
-                        amountSpent: increment(15)
-                    });
+                // Open Paystack popup
+                const handler = PaystackPop.setup({
+                    key: 'pk_live_1894c11558fa750a2bf2154b77326184381f3763',
+                    email: currentUser.email || localStorage.getItem('userEmail') || 'user@example.com',
+                    amount: 1500,
+                    currency: 'GHS',
+                    ref: reference,
+                    channels: ['mobile_money'],
+                    metadata: {
+                        custom_fields: [
+                            { display_name: "Type", variable_name: "type", value: "registration" }
+                        ],
+                        user_id: currentUser.uid
+                    },
+                    callback: function(response) {
+                        handlePaystackCallback(response.reference);
+                    },
+                    onClose: function() {
+                        btn.disabled = false;
+                        btn.textContent = 'Pay GH₵ 15.00 & Submit';
+                        alert('Payment was not completed.');
+                    }
+                });
+                handler.openIframe();
 
-                    // Create registration
-                    await createRegistration(name, phone, idType, idNumber, location, dob, occupation, uploadData, reference, 'wallet');
-
-                    alert('Registration submitted successfully! Your order is being processed.');
-                    window.location.href = 'orders.html';
-                } else {
-                    // PAYSTACK PAYMENT PATH
-                    const reference = 'REG_' + timestamp + '_' + Math.random().toString(36).substr(2, 9);
-                    
-                    // Store pending data in localStorage for callback
-                    localStorage.setItem('pendingRegData', JSON.stringify({
-                        name, phone, idType, idNumber, location, dob, occupation,
-                        uploads: uploadData,
-                        reference: reference
-                    }));
-
-                    // Open Paystack popup directly
-                    const handler = PaystackPop.setup({
-                        key: 'pk_live_1894c11558fa750a2bf2154b77326184381f3763',
-                        email: currentUser.email || localStorage.getItem('userEmail') || 'user@example.com',
-                        amount: 1500,
-                        currency: 'GHS',
-                        ref: reference,
-                        channels: ['mobile_money'],
-                        metadata: {
-                            custom_fields: [
-                                { display_name: "Type", variable_name: "type", value: "registration" }
-                            ]
-                        },
-                        callback: function(response) {
-                            handlePaystackCallback(response.reference);
-                        },
-                        onClose: function() {
-                            btn.disabled = false;
-                            btn.textContent = 'Submit Registration';
-                            alert('Payment was not completed.');
-                        }
-                    });
-                    handler.openIframe();
-                }
             } catch (error) {
                 alert('Error: ' + error.message);
                 btn.disabled = false;
-                btn.textContent = 'Submit Registration';
+                btn.textContent = 'Pay GH₵ 15.00 & Submit';
             }
         }
         window.submitRegistration = submitRegistration;
 
         async function handlePaystackCallback(reference) {
             const btn = document.getElementById('submitBtn');
+            btn.textContent = 'Verifying Payment...';
+            
             try {
                 // Verify payment via Cloud Function
                 const verifyPaymentFn = httpsCallable(functions, 'verifyPaystackPayment');
@@ -801,7 +728,7 @@
                     // Get pending data from localStorage
                     const pending = JSON.parse(localStorage.getItem('pendingRegData'));
                     
-                    // Create registration with Paystack payment
+                    // Create registration in Firestore
                     await createRegistration(
                         pending.name,
                         pending.phone,
@@ -818,21 +745,21 @@
                     // Clear pending data
                     localStorage.removeItem('pendingRegData');
 
-                    alert('Registration submitted successfully! Your order is being processed.');
+                    // Auto-redirect to orders page
                     window.location.href = 'orders.html';
                 } else {
                     alert('Payment verification failed. Please contact support.');
                     btn.disabled = false;
-                    btn.textContent = 'Submit Registration';
+                    btn.textContent = 'Pay GH₵ 15.00 & Submit';
                 }
             } catch (error) {
                 alert('Verification error: ' + error.message);
                 btn.disabled = false;
-                btn.textContent = 'Submit Registration';
+                btn.textContent = 'Pay GH₵ 15.00 & Submit';
             }
         }
 
-        // Helper function to create registration, order, transaction, and update stats
+        // Helper function to create registration, order, transaction
         async function createRegistration(name, phone, idType, idNumber, location, dob, occupation, uploads, reference, paymentMethod) {
             const userRef = doc(db, 'users', currentUser.uid);
 
@@ -846,7 +773,6 @@
                 location: location,
                 dob: dob,
                 occupation: occupation,
-                profilePhotoUrl: uploads.profilePhotoUrl,
                 selfieUrl: uploads.selfieUrl,
                 frontUrl: uploads.frontUrl,
                 backUrl: uploads.backUrl,
@@ -871,34 +797,25 @@
                 createdAt: serverTimestamp()
             });
 
-            // Record transaction for user history
+            // Record transaction
             await addDoc(collection(db, 'transactions'), {
                 userId: currentUser.uid,
-                type: 'debit',
-                amount: 15,
-                description: 'AFA Registration',
-                reference: reference,
-                paymentMethod: paymentMethod,
-                status: 'completed',
-                createdAt: serverTimestamp()
-            });
-
-            // Record for admin backend
-            await addDoc(collection(db, 'admin_transactions'), {
-                userId: currentUser.uid,
-                userEmail: currentUser.email || localStorage.getItem('userEmail'),
                 type: 'registration',
                 amount: 15,
                 description: 'AFA Registration',
                 reference: reference,
                 paymentMethod: paymentMethod,
                 status: 'completed',
+                processed: true,
+                completedAt: serverTimestamp(),
                 createdAt: serverTimestamp()
             });
 
             // Update user stats
             await updateDoc(userRef, {
-                totalRegistrations: increment(1)
+                amountSpent: increment(15),
+                totalRegistrations: increment(1),
+                lastUpdated: serverTimestamp()
             });
         }
     </script>
