@@ -650,7 +650,7 @@
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.textContent = 'Opening Payment...';
+            btn.textContent = 'Uploading Files...';
 
             try {
                 // Upload files first
@@ -677,32 +677,44 @@
                     reference: reference
                 }));
 
-                // Open Paystack popup
-                const handler = PaystackPop.setup({
-                    key: 'pk_live_1894c11558fa750a2bf2154b77326184381f3763',
+                btn.textContent = 'Opening Payment...';
+
+                // ========== PAYSTACK V2 API ==========
+                // Initialize transaction via Cloud Function first (secure - uses secret key)
+                const initPaystackFn = httpsCallable(functions, 'initializePaystackTransaction');
+                const initResult = await initPaystackFn({
                     email: currentUser.email || localStorage.getItem('userEmail') || 'user@example.com',
-                    amount: 1500,
-                    currency: 'GHS',
-                    ref: reference,
-                    channels: ['mobile_money'],
+                    amount: 1500, // 15 GHS in pesewas
+                    reference: reference,
                     metadata: {
-                        custom_fields: [
-                            { display_name: "Type", variable_name: "type", value: "registration" }
-                        ],
-                        user_id: currentUser.uid
-                    },
-                    callback: function(response) {
-                        handlePaystackCallback(response.reference);
-                    },
-                    onClose: function() {
-                        btn.disabled = false;
-                        btn.textContent = 'Pay GH₵ 15.00 & Submit';
-                        alert('Payment was not completed.');
+                        user_id: currentUser.uid,
+                        type: 'registration'
                     }
                 });
-                handler.openIframe();
+
+                if (!initResult.data.status) {
+                    throw new Error('Failed to initialize payment');
+                }
+
+                const accessCode = initResult.data.data.access_code;
+
+                // Complete transaction using Paystack v2 Popup
+                const paystack = new PaystackPop();
+                
+                paystack.resumeTransaction(accessCode)
+                    .then((transaction) => {
+                        // Payment successful
+                        handlePaystackSuccess(reference);
+                    })
+                    .catch((error) => {
+                        console.error('Payment error:', error);
+                        alert('Payment failed or was cancelled.');
+                        btn.disabled = false;
+                        btn.textContent = 'Pay GH₵ 15.00 & Submit';
+                    });
 
             } catch (error) {
+                console.error('Error:', error);
                 alert('Error: ' + error.message);
                 btn.disabled = false;
                 btn.textContent = 'Pay GH₵ 15.00 & Submit';
@@ -710,10 +722,10 @@
         }
         window.submitRegistration = submitRegistration;
 
-        async function handlePaystackCallback(reference) {
+        async function handlePaystackSuccess(reference) {
             const btn = document.getElementById('submitBtn');
             btn.textContent = 'Verifying Payment...';
-            
+
             try {
                 // Verify payment via Cloud Function
                 const verifyPaymentFn = httpsCallable(functions, 'verifyPaystackPayment');
@@ -728,7 +740,7 @@
                     // Get pending data from localStorage
                     const pending = JSON.parse(localStorage.getItem('pendingRegData'));
                     
-                    // Create registration in Firestore
+                    // Create registration with Paystack payment
                     await createRegistration(
                         pending.name,
                         pending.phone,
@@ -745,7 +757,7 @@
                     // Clear pending data
                     localStorage.removeItem('pendingRegData');
 
-                    // Auto-redirect to orders page
+                    // Redirect to orders page
                     window.location.href = 'orders.html';
                 } else {
                     alert('Payment verification failed. Please contact support.');
@@ -753,6 +765,7 @@
                     btn.textContent = 'Pay GH₵ 15.00 & Submit';
                 }
             } catch (error) {
+                console.error('Verification error:', error);
                 alert('Verification error: ' + error.message);
                 btn.disabled = false;
                 btn.textContent = 'Pay GH₵ 15.00 & Submit';
@@ -819,6 +832,6 @@
             });
         }
     </script>
-    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://js.paystack.co/v2/inline.js"></script>
 </body>
 </html>
