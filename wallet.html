@@ -136,11 +136,20 @@
         }
         .custom-amount {
             width: 100%; padding: 14px; border: 1.5px solid #e0e0e0;
-            border-radius: 14px; font-size: 15px; margin-bottom: 16px;
+            border-radius: 14px; font-size: 15px; margin-bottom: 8px;
             outline: none; color: #1a1a1a; background: #fafafa;
             -webkit-appearance: none;
         }
         .custom-amount:focus { border-color: var(--primary-yellow); background: #fff; }
+        .custom-amount.error { border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.15); }
+        .amount-error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+            font-weight: 500;
+        }
+        .amount-error.show { display: block; }
         .btn-submit {
             width: 100%; padding: 16px; background: #1a1a1a;
             color: white; font-size: 16px; font-weight: 600;
@@ -149,152 +158,6 @@
         }
         .btn-submit:active { transform: scale(0.96); }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        /* Paystack Checkout - MTN Dark Theme */
-        .paystack-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--dark-bg-gradient);
-            z-index: 1000; display: none;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .paystack-overlay.show { display: flex; }
-        .paystack-header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            background: rgba(10, 22, 40, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .paystack-logo { 
-            font-size: 14px; 
-            font-weight: 700; 
-            color: var(--primary-yellow);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .paystack-logo svg { width: 24px; height: 24px; }
-        .paystack-user-info { text-align: right; }
-        .paystack-email { font-size: 13px; color: var(--text-muted); margin-bottom: 2px; }
-        .paystack-amount { font-size: 18px; font-weight: 700; color: var(--primary-yellow); }
-        .paystack-body {
-            width: 100%;
-            max-width: 420px;
-            padding: 32px 20px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .phone-icon {
-            width: 48px; height: 48px;
-            margin-bottom: 20px;
-            color: var(--primary-yellow);
-        }
-        .paystack-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-white);
-            text-align: center;
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-        .paystack-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            padding: 20px;
-            width: 100%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        .momo-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background: white;
-            overflow: hidden;
-        }
-        .momo-input-wrapper:focus-within { border-color: var(--primary-yellow); }
-        .momo-input {
-            flex: 1;
-            padding: 16px 14px;
-            border: none;
-            font-size: 16px;
-            outline: none;
-            text-align: left;
-            letter-spacing: 1px;
-            color: #1a1a1a;
-        }
-        .momo-input::placeholder { color: #bbb; }
-        .ghana-flag {
-            padding: 0 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border-left: 1px solid #e0e0e0;
-            background: #fafafa;
-        }
-        .ghana-flag img { width: 24px; height: 16px; border-radius: 2px; }
-        .provider-select {
-            width: 100%; padding: 16px 14px; border: 1.5px solid #e0e0e0;
-            border-radius: 12px; font-size: 15px; margin-bottom: 16px;
-            outline: none; background: white; cursor: pointer;
-            color: #1a1a1a;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-        }
-        .provider-select:focus { border-color: var(--primary-yellow); }
-        .confirm-btn {
-            width: 100%; padding: 16px; background: var(--primary-yellow);
-            color: #1a1a1a; font-size: 16px; font-weight: 700;
-            border: none; border-radius: 12px; cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .confirm-btn:active { transform: scale(0.96); }
-        .confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .cancel-btn {
-            margin-top: 24px; padding: 12px 24px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-white); font-size: 14px;
-            border-radius: 12px; cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-        .cancel-btn:active { transform: scale(0.96); }
-        .secured {
-            margin-top: 32px; font-size: 12px;
-            color: var(--text-muted); display: flex;
-            align-items: center; justify-content: center; gap: 6px;
-        }
-        .secured svg { width: 14px; height: 14px; }
-        .paystack-brand { font-weight: 700; color: var(--primary-yellow); }
-        
-        /* Network badge */
-        .network-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-        .network-mtn { background: rgba(255,215,0,0.2); color: var(--primary-yellow); }
-        .network-airteltigo { background: rgba(231,76,60,0.2); color: #e74c3c; }
-        .network-telecel { background: rgba(52,152,219,0.2); color: #3498db; }
-        .network-unknown { background: rgba(255,255,255,0.1); color: var(--text-muted); }
         
         /* Transaction History */
         .history-card {
@@ -370,6 +233,7 @@
                 <button class="amount-btn" onclick="selectAmount(500)">GH₵ 500</button>
             </div>
             <input type="number" class="custom-amount" id="customAmount" placeholder="Or enter custom amount (GH₵)" oninput="clearSelection()">
+            <p class="amount-error" id="amountError">Payment is from GH₵ 15 upwards</p>
             <button class="btn-submit" id="topupBtn" onclick="initiateTopUp()">Proceed to Payment</button>
         </div>
 
@@ -377,57 +241,6 @@
             <h3>Transaction History</h3>
             <div id="txHistory">
                 <p style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">No transactions yet</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Paystack Checkout Overlay - MTN Dark Theme -->
-    <div class="paystack-overlay" id="paystackOverlay">
-        <div class="paystack-header">
-            <div class="paystack-logo">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="24" height="24" rx="6" fill="var(--primary-yellow)"/>
-                    <path d="M7 12h10M12 7v10" stroke="#0a1628" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                MTN AFA Portal
-            </div>
-            <div class="paystack-user-info">
-                <div class="paystack-email" id="payEmail">user@example.com</div>
-                <div class="paystack-amount" id="payAmount">Pay GHS 0.00</div>
-            </div>
-        </div>
-        <div class="paystack-body">
-            <svg class="phone-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="6" y="2" width="12" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
-                <path d="M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M12 6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <p class="paystack-title">Enter your mobile money number and provider to start the payment</p>
-            <div class="paystack-card">
-                <div id="networkBadge" class="network-badge network-unknown">Enter number to detect network</div>
-                <div class="momo-input-wrapper">
-                    <input type="tel" class="momo-input" id="momoNumber" placeholder="050 000 0000" maxlength="10" oninput="detectNetwork(this.value)">
-                    <div class="ghana-flag">
-                        <img src="https://flagcdn.com/w40/gh.png" alt="Ghana">
-                    </div>
-                </div>
-                <select class="provider-select" id="momoProvider">
-                    <option value="">Choose Provider</option>
-                    <option value="mtn">MTN Mobile Money</option>
-                    <option value="vodafone">Vodafone Cash</option>
-                    <option value="airteltigo">AirtelTigo Money</option>
-                </select>
-                <button class="confirm-btn" id="confirmBtn" onclick="confirmPayment()">Confirm</button>
-            </div>
-            <button class="cancel-btn" onclick="cancelPayment()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-                Cancel Payment
-            </button>
-            <div class="secured">
-                <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-                Secured by <span class="paystack-brand">paystack</span>
             </div>
         </div>
     </div>
@@ -456,52 +269,6 @@
         let currentUser = null;
         let selectedAmount = 0;
 
-        // Network detection with exact prefixes
-        const networkPrefixes = {
-            mtn: ['024', '025', '053', '054', '055', '059'],
-            airteltigo: ['026', '027', '056', '057'],
-            telecel: ['050', '020']
-        };
-
-        window.detectNetwork = function(phone) {
-            const badge = document.getElementById('networkBadge');
-            const provider = document.getElementById('momoProvider');
-            
-            if (phone.length < 3) {
-                badge.className = 'network-badge network-unknown';
-                badge.textContent = 'Enter number to detect network';
-                return;
-            }
-            
-            const prefix = phone.substring(0, 3);
-            let detected = null;
-            
-            for (const [network, prefixes] of Object.entries(networkPrefixes)) {
-                if (prefixes.includes(prefix)) {
-                    detected = network;
-                    break;
-                }
-            }
-            
-            if (detected === 'mtn') {
-                badge.className = 'network-badge network-mtn';
-                badge.textContent = 'MTN Network Detected';
-                provider.value = 'mtn';
-            } else if (detected === 'airteltigo') {
-                badge.className = 'network-badge network-airteltigo';
-                badge.textContent = 'AirtelTigo Network Detected';
-                provider.value = 'airteltigo';
-            } else if (detected === 'telecel') {
-                badge.className = 'network-badge network-telecel';
-                badge.textContent = 'Telecel Network Detected';
-                provider.value = 'vodafone';
-            } else {
-                badge.className = 'network-badge network-unknown';
-                badge.textContent = 'Unknown Network';
-                provider.value = '';
-            }
-        };
-
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'signin.html';
@@ -509,7 +276,6 @@
             }
             currentUser = user;
             const email = user.email || localStorage.getItem('userEmail') || 'user@example.com';
-            document.getElementById('payEmail').textContent = email;
 
             // Real-time wallet
             onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
@@ -561,79 +327,55 @@
             document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById('customAmount').value = amt;
+            // Clear error when valid amount selected
+            document.getElementById('amountError').classList.remove('show');
+            document.getElementById('customAmount').classList.remove('error');
         };
 
         window.clearSelection = function() {
             selectedAmount = 0;
             document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('active'));
+            // Clear error on input
+            document.getElementById('amountError').classList.remove('show');
+            document.getElementById('customAmount').classList.remove('error');
         };
 
         window.initiateTopUp = function() {
             const custom = parseFloat(document.getElementById('customAmount').value);
             const amount = selectedAmount || custom;
+            const errorEl = document.getElementById('amountError');
+            const inputEl = document.getElementById('customAmount');
 
             if (!amount || amount < 15) {
-                alert('Minimum top-up amount is GH₵ 15. Please enter at least GH₵ 15.');
+                errorEl.classList.add('show');
+                inputEl.classList.add('error');
                 return;
             }
 
-            selectedAmount = amount;
-            document.getElementById('payAmount').textContent = 'Pay GHS ' + amount.toFixed(2);
-            document.getElementById('paystackOverlay').classList.add('show');
-            document.body.style.overflow = 'hidden';
-        };
+            // Clear error
+            errorEl.classList.remove('show');
+            inputEl.classList.remove('error');
 
-        window.cancelPayment = function() {
-            document.getElementById('paystackOverlay').classList.remove('show');
-            document.body.style.overflow = '';
-            document.getElementById('momoNumber').value = '';
-            document.getElementById('momoProvider').value = '';
-            document.getElementById('networkBadge').className = 'network-badge network-unknown';
-            document.getElementById('networkBadge').textContent = 'Enter number to detect network';
-            document.getElementById('confirmBtn').disabled = false;
-            document.getElementById('confirmBtn').textContent = 'Confirm';
-        };
-
-        window.confirmPayment = async function() {
-            const momoNumber = document.getElementById('momoNumber').value.trim();
-            const provider = document.getElementById('momoProvider').value;
-            const btn = document.getElementById('confirmBtn');
-
-            if (!momoNumber || momoNumber.length !== 10) {
-                alert('Please enter a valid 10-digit mobile money number.');
-                return;
-            }
-            if (!provider) {
-                alert('Please select a provider.');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Processing...';
-
+            // Go straight to Paystack popup
             const reference = 'WALLET_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             try {
                 const handler = PaystackPop.setup({
                     key: 'pk_live_1894c11558fa750a2bf2154b77326184381f3763',
                     email: currentUser.email || localStorage.getItem('userEmail') || 'user@example.com',
-                    amount: selectedAmount * 100,
+                    amount: amount * 100,
                     currency: 'GHS',
                     ref: reference,
                     channels: ['mobile_money'],
                     metadata: {
                         custom_fields: [
-                            { display_name: "Phone Number", variable_name: "phone", value: momoNumber },
-                            { display_name: "Provider", variable_name: "provider", value: provider },
                             { display_name: "Type", variable_name: "type", value: "wallet_topup" }
                         ]
                     },
                     callback: function(response) {
-                        verifyPayment(response.reference, selectedAmount, 'wallet_topup');
+                        verifyPayment(response.reference, amount, 'wallet_topup');
                     },
                     onClose: function() {
-                        btn.disabled = false;
-                        btn.textContent = 'Confirm';
                         alert('Payment was not completed.');
                     }
                 });
@@ -641,13 +383,10 @@
 
             } catch (error) {
                 alert('Payment error: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Confirm';
             }
         };
 
         async function verifyPayment(reference, amount, type) {
-            const btn = document.getElementById('confirmBtn');
             try {
                 const verifyPaymentFn = httpsCallable(functions, 'verifyPaystackPayment');
                 const result = await verifyPaymentFn({
@@ -669,16 +408,11 @@
                     });
 
                     alert('Wallet topped up successfully! GH₵' + amount.toFixed(2) + ' added.');
-                    cancelPayment();
                 } else {
                     alert('Payment verification failed. Please contact support.');
-                    btn.disabled = false;
-                    btn.textContent = 'Confirm';
                 }
             } catch (error) {
                 alert('Verification error: ' + error.message);
-                btn.disabled = false;
-                btn.textContent = 'Confirm';
             }
         }
     </script>
