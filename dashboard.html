@@ -344,6 +344,17 @@
             <div class="info-value" id="totalRegistrations">0</div>
             <a href="register.html" class="btn-black">New AFA Registration</a>
         </div>
+
+        <!-- Recent Transactions -->
+        <div class="info-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="info-label" style="margin: 0;">Recent Transactions</div>
+                <a href="orders.html" style="font-size: 12px; color: var(--primary-yellow); text-decoration: none; font-weight: 600;">View All</a>
+            </div>
+            <div id="transactionList">
+                <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading transactions...</p>
+            </div>
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -369,7 +380,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit, getDocs, updateDoc, increment, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCcIww7vLwcx3dB0-5-OPg1sw1lcP-u4ZM",
@@ -392,6 +403,60 @@
         }
         window.toggleMenu = toggleMenu;
 
+        // ========== VERIFY PAYSTACK PAYMENT & UPDATE WALLET ==========
+        // This function verifies Paystack payment via backend and updates wallet
+        async function verifyAndUpdateWallet(userId, reference, amount) {
+            try {
+                // Check if transaction exists and is already verified by Paystack
+                const txRef = doc(db, 'transactions', reference);
+                const txSnap = await getDoc(txRef);
+                
+                if (txSnap.exists()) {
+                    const txData = txSnap.data();
+                    
+                    // Only process if Paystack verified payment as success and not yet processed
+                    if (txData.status === 'success' && txData.paystackVerified === true && txData.processed !== true) {
+                        const userRef = doc(db, 'users', userId);
+                        
+                        // Add amount to wallet balance
+                        await updateDoc(userRef, {
+                            walletBalance: increment(amount),
+                            lastUpdated: serverTimestamp()
+                        });
+                        
+                        // Mark transaction as processed so it doesn't add twice
+                        await updateDoc(txRef, {
+                            processed: true,
+                            processedAt: serverTimestamp()
+                        });
+                        
+                        console.log('Wallet topped up: GH₵ ' + amount.toFixed(2));
+                    }
+                }
+            } catch (error) {
+                console.error('Wallet update error:', error);
+            }
+        }
+
+        // ========== TRACK REGISTRATION SPENDING ==========
+        // When user pays for registration from wallet, track amount spent
+        async function trackRegistrationSpend(userId, amount) {
+            try {
+                const userRef = doc(db, 'users', userId);
+                
+                // Add to amountSpent and increment totalRegistrations
+                await updateDoc(userRef, {
+                    amountSpent: increment(amount),
+                    totalRegistrations: increment(1),
+                    lastUpdated: serverTimestamp()
+                });
+                
+                console.log('Registration tracked: GH₵ ' + amount.toFixed(2));
+            } catch (error) {
+                console.error('Registration tracking error:', error);
+            }
+        }
+
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'signin.html';
@@ -408,12 +473,18 @@
                 document.getElementById('headerIcon').innerHTML = `<img src="${profilePic}" class="profile-pic-small" alt="Profile">`;
             }
 
-            // Real-time user data
+            // ========== REAL-TIME USER DATA (Wallet, Spent, Registrations) ==========
             onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    
+                    // Wallet Balance - shows current balance (updated after Paystack verification)
                     document.getElementById('walletBalance').textContent = 'GH₵ ' + (data.walletBalance || 0).toFixed(2);
+                    
+                    // Amount Spent - cumulative total of all registration spending
                     document.getElementById('amountSpent').textContent = 'GH₵ ' + (data.amountSpent || 0).toFixed(2);
+                    
+                    // Total Registrations - count of all completed registrations
                     document.getElementById('totalRegistrations').textContent = data.totalRegistrations || 0;
                     
                     if (data.name) {
@@ -426,7 +497,113 @@
                     }
                 }
             });
+
+            // ========== LISTEN FOR VERIFIED TOP-UP TRANSACTIONS ==========
+            // When Paystack verifies payment as completed, this adds amount to wallet
+            const topUpQuery = query(
+                collection(db, 'transactions'),
+                where('userId', '==', user.uid),
+                where('type', '==', 'topup'),
+                where('status', '==', 'success'),
+                where('paystackVerified', '==', true),
+                orderBy('verifiedAt', 'desc'),
+                limit(50)
+            );
+
+            onSnapshot(topUpQuery, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const tx = change.doc.data();
+                        // Only process unprocessed transactions (prevents double-counting)
+                        if (!tx.processed) {
+                            verifyAndUpdateWallet(user.uid, change.doc.id, tx.amount);
+                        }
+                    }
+                });
+            });
+
+            // ========== LISTEN FOR REGISTRATION PAYMENTS ==========
+            // When user pays for registration from wallet, track amount spent + count
+            const regQuery = query(
+                collection(db, 'transactions'),
+                where('userId', '==', user.uid),
+                where('type', '==', 'registration'),
+                where('status', '==', 'completed'),
+                orderBy('completedAt', 'desc'),
+                limit(50)
+            );
+
+            onSnapshot(regQuery, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const tx = change.doc.data();
+                        // Only process unprocessed registration transactions
+                        if (!tx.processed) {
+                            trackRegistrationSpend(user.uid, tx.amount);
+                            
+                            // Mark as processed to prevent double-counting
+                            updateDoc(doc(db, 'transactions', change.doc.id), {
+                                processed: true,
+                                processedAt: serverTimestamp()
+                            });
+                        }
+                    }
+                });
+            });
+
+            // ========== LOAD RECENT TRANSACTIONS HISTORY ==========
+            loadTransactionHistory(user.uid);
         });
+
+        // ========== TRANSACTION HISTORY DISPLAY ==========
+        async function loadTransactionHistory(userId) {
+            try {
+                const txQuery = query(
+                    collection(db, 'transactions'),
+                    where('userId', '==', userId),
+                    orderBy('createdAt', 'desc'),
+                    limit(10)
+                );
+                
+                const snapshot = await getDocs(txQuery);
+                const txList = document.getElementById('transactionList');
+                
+                if (snapshot.empty) {
+                    txList.innerHTML = '<p style=\"color: var(--text-muted); text-align: center; padding: 20px;\">No transactions yet</p>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach((doc) => {
+                    const tx = doc.data();
+                    const isCredit = tx.type === 'topup';
+                    const amount = tx.amount || 0;
+                    const status = tx.status || 'pending';
+                    const date = tx.createdAt ? new Date(tx.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    
+                    let statusClass = 'status-pending';
+                    if (status === 'success' || status === 'completed') statusClass = 'status-approved';
+                    if (status === 'failed' || status === 'rejected') statusClass = 'status-rejected';
+                    
+                    html += `
+                        <div style=\"display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1);\">
+                            <div>
+                                <div style=\"font-weight: 600; font-size: 14px;\">${tx.description || (isCredit ? 'Wallet Top Up' : 'AFA Registration')}</div>
+                                <div style=\"font-size: 12px; color: var(--text-muted);\">${date} • Ref: ${tx.reference || doc.id.substring(0,8)}</div>
+                            </div>
+                            <div style=\"text-align: right;\">
+                                <div style=\"font-weight: 700; font-size: 16px; color: ${isCredit ? '#4CAF50' : '#FF5252'};\">${isCredit ? '+' : '-'}GH₵ ${amount.toFixed(2)}</div>
+                                <span class=\"status-badge ${statusClass}\" style=\"margin: 0; padding: 3px 10px; font-size: 11px;\">${status}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                txList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
     </script>
 </body>
 </html>
